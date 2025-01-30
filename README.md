@@ -52,6 +52,8 @@ CUDA_VISIBLE_DEVICES=1 python -m code.cv_runner dataset SUN method smo cv.image_
 ### Testing
 ```
 # Single
+CUDA_VISIBLE_DEVICES=1 python -m code.cv_runner dataset SUN method asci cv.image_embedding res101_finetuned cv.class_embedding att cos_sim_loss True include_unseen True num_layers 2 beta1 0.9 lr 0.00001 batch_size 16 embed_dim 2048 strict_eval True early_stopping_slope True cv.calc_entropy True
+CUDA_VISIBLE_DEVICES=1 python -m code.cv_runner dataset SUN method comc cv.image_embedding res101_finetuned cv.class_embedding att cos_sim_loss True include_unseen True num_layers 2 beta1 0.9 lr 0.00001 batch_size 16 embed_dim 2048 strict_eval True early_stopping_slope True cv.calc_entropy True
 CUDA_VISIBLE_DEVICES=1 python -m code.cv_runner dataset SUN method icis cv.image_embedding res101_finetuned cv.class_embedding att cos_sim_loss True include_unseen True num_layers 2 beta1 0.9 lr 0.00001 batch_size 16 embed_dim 2048 strict_eval True early_stopping_slope True cv.calc_entropy True
 CUDA_VISIBLE_DEVICES=1 python -m code.cv_runner dataset SUN method conse cv.image_embedding res101_finetuned cv.class_embedding att cv.conse_benchmark True
 CUDA_VISIBLE_DEVICES=1 python -m code.cv_runner dataset SUN method costa cv.image_embedding res101_finetuned cv.class_embedding att cv.costa_benchmark True
@@ -60,6 +62,8 @@ CUDA_VISIBLE_DEVICES=1 python -m code.cv_runner dataset SUN method wdae cv.image
 CUDA_VISIBLE_DEVICES=1 python -m code.cv_runner dataset SUN method wavg cv.image_embedding res101_finetuned cv.vgse_baseline wavg cv.class_embedding att norm_scale_heuristic True
 CUDA_VISIBLE_DEVICES=1 python -m code.cv_runner dataset SUN method smo cv.image_embedding res101_finetuned cv.vgse_baseline smo cv.class_embedding att cv.vgse_alpha 0. norm_scale_heuristic True
 # Group
+CUDA_VISIBLE_DEVICES=1 python -m code.cv_runner dataset SUN method asci num_runs 5 cv.image_embedding res101_finetuned cv.class_embedding att cos_sim_loss True include_unseen True num_layers 2 beta1 0.9 lr 0.00001 batch_size 16 embed_dim 2048 strict_eval True early_stopping_slope True cv.calc_entropy True
+CUDA_VISIBLE_DEVICES=1 python -m code.cv_runner dataset SUN method comc num_runs 5 cv.image_embedding res101_finetuned cv.class_embedding att cos_sim_loss True include_unseen True num_layers 2 beta1 0.9 lr 0.00001 batch_size 16 embed_dim 2048 strict_eval True early_stopping_slope True cv.calc_entropy True
 CUDA_VISIBLE_DEVICES=1 python -m code.cv_runner dataset SUN method icis num_runs 5 cv.image_embedding res101_finetuned cv.class_embedding att cos_sim_loss True include_unseen True num_layers 2 beta1 0.9 lr 0.00001 batch_size 16 embed_dim 2048 strict_eval True early_stopping_slope True cv.calc_entropy True
 CUDA_VISIBLE_DEVICES=1 python -m code.cv_runner dataset SUN method conse  num_runs 5 cv.image_embedding res101_finetuned cv.class_embedding att cv.conse_benchmark True
 CUDA_VISIBLE_DEVICES=1 python -m code.cv_runner dataset SUN method costa num_runs 5 cv.image_embedding res101_finetuned cv.class_embedding att cv.costa_benchmark True

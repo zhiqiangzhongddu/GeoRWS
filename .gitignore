@@ -1,0 +1,6 @@
+.idea/
+__pycache__
+openai_env.py
+data/cv/AWA2*
+data/cv/CUB*
+data/cv/SUN*
