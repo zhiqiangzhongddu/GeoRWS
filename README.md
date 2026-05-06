@@ -1,4 +1,4 @@
-# LLM-augmented Zero-shot Learning 
+# Geometry-Regularized Relational Weight Synthesis
 
 ## Instruction to execution
 
