@@ -1,17 +1,24 @@
+# python 3.10 (interpreter requirement: install via conda, not pip)
+# conda create -n georws -y python=3.10 && conda activate georws
+# pip install torch==2.4.1 --index-url https://download.pytorch.org/whl/cu118
+# pip install -r requirements.txt
 torch==2.4.1
-torchvision==0.19.1
-regex==2024.9.11
-tqdm==4.66.5
-typing-extensions==4.11.0
-wcwidth==0.2.13
-ftfy==6.2.3
-numpy==2.0.1
-scikit-learn==1.5.2
-clip==1.0
-openai==1.51.0
+transformers==4.46.3
+huggingface_hub<1.0
+tokenizers==0.20.3
+safetensors==0.8.0
+sentencepiece==0.2.3
+protobuf==7.36.2
+openai==3.46.0
 yacs==0.1.8
-pytz==2024.2
-notebook==7.2.2
-#torch_geometric==2.5.2
-#matplotlib==3.9.0
-#tiktoken==0.7.0
+numpy==2.0.2
+scipy==1.15.3
+scikit-learn==1.7.2
+tqdm==4.70.1
+gdown==6.5.1
+# CLIP RN101 class-name embeddings of the inherited ICIS baselines (zsl.class_embedding clip)
+ftfy==6.3.1
+regex==2026.9.29
+clip @ git+https://github.com/openai/CLIP.git
+# test runner
+pytest>=7.4

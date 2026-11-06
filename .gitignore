@@ -1,6 +1,40 @@
+# ignore Python cache files
+*__pycache__
+.pytest_cache/
+.ruff_cache/
+# ignore editor settings and workspace files
+.vscode/
 .idea/
-__pycache__
+# ignore codex files and settings
+.codex
+# ignore claude files and settings
+.claude
+
+# never commit API keys
 openai_env.py
-data/cv/AWA2*
-data/cv/CUB*
-data/cv/SUN*
+.env
+
+# ignore heavy data files (xlsa17 .mat files, downloads, LLM descriptions and
+# text embeddings) but keep the class-name lists, the small class-name
+# embeddings shipped with ICIS, and the .gitkeep files for directory structure
+data/*
+!data/.gitkeep
+!data/class_names/
+!data/class_embeddings/
+!data/class_embeddings/**
+
+# ignore outputs but keep .gitkeep files for directory structure
+outputs/*
+!outputs/.gitkeep
+
+# ignore result tables but keep .gitkeep files for directory structure
+!outputs/results/
+outputs/results/*
+!outputs/results/.gitkeep
+
+# Slurm launchers, the design doc and the test suite stay local and are never published
+slurm/
+docs/
+tests/
+
+*.lock
