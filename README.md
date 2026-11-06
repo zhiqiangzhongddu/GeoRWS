@@ -1,6 +1,7 @@
 # GeoRWS: Geometry-Regularized Relational Weight Synthesis
 
-Image-free zero-shot classifier expansion. A frozen image classifier `Phi = head(F(x))` with
+Official implementation of **"Read-Only Zero-Shot Classifier Expansion from Pairwise Semantics"**
+(Zhiqiang Zhong and Jun Pang, NeurIPS 2026). Image-free zero-shot classifier expansion. A frozen image classifier `Phi = head(F(x))` with
 seen-class head weights `W_S` is extended to unseen classes without training images: a frozen LLM writes
 class-pair affinity descriptions, a frozen text encoder embeds them, and three small MLPs (an adaptive
 semantic encoder, its decoder, and a scoring head conditioned on each seen-class weight) turn the pairwise
@@ -138,3 +139,16 @@ Methods: `conse`, `costa`, `subreg`, `wdae`, `wavg`, `smo`, `icis`, `georws`. `z
 att|wiki2vec|cn|clip|llm` selects the baselines' class-wise semantic input (`llm` = the LLM class-wise
 descriptions embedded in step 2). `baselines.conse_fixed_eval True` fixes the label mapping of the inherited
 ConSE GZSL-unseen evaluation (legacy behaviour is the default).
+
+## Citation
+
+If you use this code or the GeoRWS method, please cite:
+
+```bibtex
+@inproceedings{zhong2026georws,
+  title     = {Read-Only Zero-Shot Classifier Expansion from Pairwise Semantics},
+  author    = {Zhong, Zhiqiang and Pang, Jun},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2026}
+}
+```
