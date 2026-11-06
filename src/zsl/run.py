@@ -1,6 +1,4 @@
 import argparse
-import os
-import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -11,6 +9,7 @@ from src.data_loader.dataset import ZSLDataset
 from src.zsl.base_classifier import BASECLASSIFIER
 from src.zsl.cache import base_classifier_path
 from src.zsl.utils import map_label, set_seed, use_cuda
+from src.utils.io import atomic_torch_save
 from src.utils.save_results import append_result_row
 
 
@@ -27,15 +26,8 @@ def prepare_base_model(cfg, data, seed, tag='', eval_x=None, eval_y=None):
         _batch_size=cfg.base_classifier.batch_size, _embed_dim=cfg.train.embed_dim,
         _num_layers=cfg.train.num_layers, cfg=cfg, eval_x=eval_x, eval_y=eval_y,
     ).fit()
-    fd, temp = tempfile.mkstemp(prefix=path.name + '.', dir=path.parent)
-    os.close(fd)
-    try:
-        torch.save({'state_dict': model.state_dict(), 'input_dim': model.fc.in_features,
-                    'num_classes': model.fc.out_features}, temp)
-        os.replace(temp, path)
-    finally:
-        if os.path.exists(temp):
-            os.unlink(temp)
+    atomic_torch_save({'state_dict': model.state_dict(), 'input_dim': model.fc.in_features,
+                       'num_classes': model.fc.out_features}, path)
     return path
 
 
@@ -93,15 +85,17 @@ def run_zsl(cfg, overrides=None):
         print(f'Seed {seed}: {result}')
     row = dict(method=cfg.method, dataset=cfg.dataset, mode=cfg.zsl.mode,
                image_embedding=cfg.zsl.image_embedding, class_embedding=cfg.zsl.class_embedding,
-               llm=cfg.llm.name, text_encoder=cfg.text_encoder.name,
-               semantic_source=cfg.georws.semantic_source, unseen_scale=cfg.georws.unseen_scale,
-               seen_logit_bias=cfg.zsl.seen_logit_bias, conse_fixed_eval=cfg.baselines.conse_fixed_eval,
                seeds=','.join(map(str, seeds)), overrides=' '.join(overrides or []))
+    if cfg.method == 'georws' or cfg.zsl.class_embedding == 'llm':
+        row.update(llm=cfg.llm.name, text_encoder=cfg.text_encoder.name)
     if cfg.method == 'georws':
-        row.update(perturb_kind=cfg.georws.perturb.kind, perturb_rate=cfg.georws.perturb.rate,
-                   perturb_sigma=cfg.georws.perturb.sigma,
-                   perturb_truncation_frac=cfg.georws.perturb.truncation_frac,
+        row.update(symmetric=cfg.descriptions.symmetric, semantic_source=cfg.georws.semantic_source,
+                   unseen_scale=cfg.georws.unseen_scale, seen_logit_bias=cfg.zsl.seen_logit_bias,
+                   perturb_kind=cfg.georws.perturb.kind, perturb_rate=cfg.georws.perturb.rate,
+                   perturb_sigma=cfg.georws.perturb.sigma, truncation_frac=cfg.text_encoder.truncation_frac,
                    perturb_seed=cfg.georws.perturb.seed)
+    if cfg.method == 'conse':
+        row.update(conse_fixed_eval=cfg.baselines.conse_fixed_eval)
     for metric in ('acc_zsl', 'acc_unseen', 'acc_seen', 'H'):
         values = [r[metric] for r in results]
         row[f'{metric}_mean'] = float(np.mean(values))

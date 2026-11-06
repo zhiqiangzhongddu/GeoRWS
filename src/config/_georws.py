@@ -24,7 +24,6 @@ def set_georws_cfg(cfg):
     cfg.georws.perturb.kind = 'none'  # none | embedding_dropout | gaussian_noise | text_truncation | pair_swap
     cfg.georws.perturb.rate = 0.2  # Perturbation rate
     cfg.georws.perturb.sigma = 0.2  # Noise ratio
-    cfg.georws.perturb.truncation_frac = 0.5  # Text fraction
     cfg.georws.perturb.seed = 0  # Perturbation seed
     cfg.georws.val = CN()  # Configuration block
     cfg.georws.val.holdout_frac = 0.2  # Holdout fraction

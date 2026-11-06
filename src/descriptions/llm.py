@@ -2,6 +2,7 @@ import hashlib
 import os
 import threading
 import time
+import warnings
 from typing import Protocol
 
 
@@ -25,7 +26,15 @@ class OpenAIChatClient:
                 response = self.client.chat.completions.create(
                     model=self.cfg.name, messages=[{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
                     temperature=self.cfg.temperature, top_p=self.cfg.top_p, max_tokens=self.cfg.max_tokens)
-                return response.choices[0].message.content
+                choice = response.choices[0]
+                content = choice.message.content
+                if content and content.strip():
+                    if choice.finish_reason == 'length':
+                        warnings.warn('LLM output truncated by llm.max_tokens', stacklevel=2)
+                    return content
+                if attempt == self.cfg.max_retries:
+                    raise RuntimeError('Empty LLM response after retries')
+                time.sleep(min(2 ** attempt, 60))
             except (openai.RateLimitError, openai.APIConnectionError, openai.APITimeoutError, openai.APIStatusError) as exc:
                 retryable = not isinstance(exc, openai.APIStatusError) or exc.status_code in (408, 409, 429) or exc.status_code >= 500
                 if not retryable or attempt == self.cfg.max_retries:

@@ -1,6 +1,5 @@
 import hashlib
-import os
-import tempfile
+import json
 from pathlib import Path
 
 import torch
@@ -10,6 +9,7 @@ from src.georws.model import GeoRWSModel
 from src.georws.perturbations import perturb_affinity
 from src.georws.synthesis import synthesize_weights
 from src.georws.trainer import train_georws
+from src.utils.io import atomic_torch_save
 from src.utils.naming import llm_tag
 from src.zsl.model_bases import LINEAR
 from src.zsl.regressor import REGRESSOR
@@ -54,28 +54,39 @@ def fit_and_evaluate(cfg, data_view, seed, target_weights=None):
                           cfg=cfg, target_weights=target_weights)
     device = runner.target_weights.device
     source = cfg.georws.semantic_source
+    if cfg.georws.perturb.kind == 'text_truncation' and not 0 < cfg.text_encoder.truncation_frac < 1:
+        raise ValueError('text_encoder.truncation_frac must be strictly between 0 and 1')
     base = Path(cfg.text_encoder.cache_dir) / cfg.dataset / cfg.text_encoder.name
     directory = base / llm_tag(cfg)
     if source not in ('pairwise', 'classwise', 'label'):
         raise ValueError(f'Unknown semantic source: {source}')
     path = base / 'label.pt' if source == 'label' else directory / f'{source}.pt'
-    saved = torch.load(path, map_location='cpu', weights_only=True)
+    saved = torch.load(path, map_location='cpu', weights_only=True, mmap=True)
+    manifest = json.loads(path.with_suffix('.manifest.json').read_text(encoding='utf-8'))
+    if source == 'pairwise' and manifest['symmetric'] != cfg.descriptions.symmetric:
+        raise ValueError(f'Embedding symmetry mismatch: {path}')
     classes, emb = saved['classes'], saved['emb']
     if classes != list(data_view.class_names) or emb.shape[0] != len(classes):
         raise ValueError(f'Embedding classes mismatch: {path}')
     seen, unseen = data_view.seen_classes, data_view.unseen_classes
     if source == 'pairwise':
-        a_seen = emb[seen][:, seen]
+        a_seen = emb[seen[:, None], seen[None, :]]
         if cfg.georws.perturb.kind == 'text_truncation':
-            trunc = directory / f'pairwise_trunc{cfg.georws.perturb.truncation_frac:g}.pt'
-            saved_trunc = torch.load(trunc, map_location='cpu', weights_only=True)
+            frac = cfg.text_encoder.truncation_frac
+            trunc = directory / f'pairwise_trunc{frac:g}.pt'
+            saved_trunc = torch.load(trunc, map_location='cpu', weights_only=True, mmap=True)
+            trunc_manifest = json.loads(trunc.with_suffix('.manifest.json').read_text(encoding='utf-8'))
+            if (trunc_manifest['symmetric'] != cfg.descriptions.symmetric
+                    or trunc_manifest['truncation_frac'] != frac
+                    or trunc_manifest['source_sha256'] != manifest['source_sha256']):
+                raise ValueError(f'Truncated embedding manifest mismatch: {trunc}')
             unseen_emb = saved_trunc['emb']
             if (saved_trunc['classes'] != classes or unseen_emb.shape[0] != len(classes)
                     or unseen_emb.shape != emb.shape):
                 raise ValueError(f'Truncated embedding mismatch: {trunc}')
         else:
             unseen_emb = emb
-        a_unseen = unseen_emb[unseen][:, seen]
+        a_unseen = unseen_emb[unseen[:, None], seen[None, :]]
     else:
         if cfg.georws.perturb.kind == 'text_truncation':
             raise ValueError('Text truncation requires pairwise semantic source')
@@ -115,14 +126,14 @@ def fit_and_evaluate(cfg, data_view, seed, target_weights=None):
     fingerprint = yaml.safe_dump(dict(georws=yaml.safe_load(cfg.georws.dump()),
                                       seen_logit_bias=cfg.zsl.seen_logit_bias,
                                       train=yaml.safe_load(cfg.train.dump()),
-                                      image_embedding=cfg.zsl.image_embedding), sort_keys=True)
+                                      image_embedding=cfg.zsl.image_embedding,
+                                      symmetric=cfg.descriptions.symmetric,
+                                      truncation_frac=cfg.text_encoder.truncation_frac), sort_keys=True)
     tag += '_' + hashlib.sha256(fingerprint.encode('utf-8')).hexdigest()[:8]
     path = Path(cfg.output_root) / 'georws' / cfg.dataset / tag / f'{cfg.zsl.mode}_seed{seed}.pt'
     path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as tmp:
-        torch.save(dict(alpha=alpha, weights=weights, unseen_classes=unseen.cpu(),
-                        seen_classes=seen.cpu(), cfg=cfg.dump()), tmp)
-    os.replace(tmp.name, path)
+    atomic_torch_save(dict(alpha=alpha, weights=weights, unseen_classes=unseen.cpu(),
+                           seen_classes=seen.cpu(), cfg=cfg.dump()), path)
     runner.inject(weights, cfg.zsl.seen_logit_bias)
     _, acc_seen, acc_unseen, h, acc_zsl = runner.val_gzsl()
     return dict(acc_zsl=float(acc_zsl), acc_unseen=float(acc_unseen), acc_seen=float(acc_seen), H=float(h))

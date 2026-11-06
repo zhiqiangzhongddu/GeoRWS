@@ -8,6 +8,7 @@ def train_georws(model, a_seen, w_seen, cfg, device, log_prefix, eval_fn=None):
     optimizer = torch.optim.Adam(model.parameters(), lr=cfg.train.lr, betas=(cfg.train.beta1, 0.999))
     history, updates, patience, last_losses = [], 0, 0, {}
     model.train()
+    epoch = 0
     for epoch in range(1, cfg.train.num_epoch + 1):
         totals = {}
         for m_cpu in torch.randperm(a_seen.size(0)).split(cfg.train.batch_size):

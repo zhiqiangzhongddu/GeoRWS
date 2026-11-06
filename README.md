@@ -80,7 +80,8 @@ python scripts/run_text_embedding.py dataset CUB llm.name gpt-4o text_encoder.na
 Writes `data/embeddings/<DATASET>/<encoder>/<llm>/{pairwise,classwise}.pt` (dense `[C, C, d]` / `[C, d]`
 tensors indexed by class id) and `data/embeddings/<DATASET>/<encoder>/label.pt` ("a photo of a {class}").
 Long descriptions are embedded in context-sized chunks pooled by content length; rows are L2-normalised.
-`text_encoder.truncation_frac 0.5` additionally writes the truncated file used by the robustness study.
+`text_encoder.truncation_frac 0.5` additionally writes the truncated file used by the robustness study;
+`georws.perturb.kind text_truncation` reads the file for the same `text_encoder.truncation_frac`.
 
 ### 3. GeoRWS
 
@@ -105,7 +106,7 @@ Main options (`src/config/_georws.py`):
 | `georws.adaptive_encoder False` | ablation "w/o semantic encoding" (`z = a`, no decoder) |
 | `georws.unseen_scale seen_norm|none|icis` | deployment rule for the synthesised weights (see below) |
 | `zsl.seen_logit_bias` | calibrated stacking: constant subtracted from the seen logits at GZSL evaluation |
-| `georws.perturb.kind embedding_dropout|gaussian_noise|text_truncation|pair_swap` | inference-time semantic perturbations (robustness table) |
+| `georws.perturb.kind embedding_dropout|gaussian_noise|text_truncation|pair_swap` | inference-time semantic perturbations; text truncation uses `text_encoder.truncation_frac` |
 | `train.lr`, `train.batch_size`, `train.num_epoch` | Adam learning rate, masked classes per batch, epochs (fixed budget) |
 
 **Deployment rule.** A convex mixture of seen weights gives unseen logits that never exceed the largest seen
